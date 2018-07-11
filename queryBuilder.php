@@ -1,41 +1,58 @@
 <?php
 
 class queryBuilder{
+    public static $mysqli;
     public static $select;
     public static $from;
-    public static $table;
+    public static $where;
     public static $insert;
     public static $limit;
     public static $update;
     public static $delete;
-
+    public static $orderByDesc;
+    public static $orderByAsc;
 
     function __construct($config){
-        $mysqli = new mysqli($config['host'], $config['username'], $config['passwd'], $config['dbname']);
-        $mysqli->query("SET NAMES 'utf8'");
+        self::$mysqli = new mysqli($config['host'], $config['username'], $config['passwd'], $config['dbname']);
+        self::$mysqli->query("SET NAMES 'utf8'");
     }
 
-    public static function dbClose($mysqli){
-        $mysqli->close();
+    public static function dbClose(){
+        self::$mysqli->close();
     }
 
     public static function select($columns){
-        self::$select = "SELECT ";
-        foreach ($columns as $key => $column) {
-            if ($key < count($columns)-1){
-                self::$select .= $column . ',';
-                continue;
-            }
-            self::$select .= $column;
+        if(gettype($columns) != "array"){
+            return false;
         }
-    }
+        self::$select = "SELECT ".implode(",", $columns);
 
+    }
     public static function from($table){
+        if(gettype($table) != "string"){
+            return false;
+        }
         self::$from = "FROM ".$table;
     }
+    /**
+     * $cases - ассоциативный массив
+     */
+    public static function where($cases){
+        if(gettype($cases) != "array"){
+            return false;
+        }
+        self::$where = "WHERE ";
+        foreach ($cases as $key => $case) {
+            if ($key < count($cases)-1){
+                self::$where .= $key.'='.$case.",";
+                continue;
+            }
+            self::$where .= $key.'='.$case;
+        }
 
-    public static function insert($table, $columns){
-        self::$insert = "INSERT INTO ".$table;
+    }
+    public static function insert($mysqli, $table, $columns){
+        $insert = "INSERT INTO ".$table;
         $keys = "(";
         foreach ($columns as $key => $column) {
             if ($key < count($columns)-1){
@@ -44,7 +61,7 @@ class queryBuilder{
             }
             $keys .= $key.")";
         }
-        self::$insert .= "VALUES";
+        $insert .= $keys."VALUES";
         $values = "(";
         foreach ($columns as $key => $column) {
             if ($key < count($columns)-1){
@@ -53,8 +70,22 @@ class queryBuilder{
             }
             $values .= $column.")";
         }
+        $insert .= $values;
+        return $mysqli->query($insert);
     }
 
-
+    public static function update($mysqli, $table, $columns, $id){
+        $update = "UPDATE ".$table." SET ";
+        $values = "";
+        foreach ($columns as $key => $column) {
+            if ($key < count($columns)-1){
+                $values .= $key . '=' . $column . ",";
+                continue;
+            }
+            $values .= $key . '=' . $column;
+        }
+        $update .= $values." WHERE ".$table.".`id` = ".$id;
+        return $mysqli->query($update);
+    }
 
 }
