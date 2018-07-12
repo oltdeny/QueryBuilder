@@ -9,8 +9,7 @@ class queryBuilder{
     public static $limit;
     public static $update;
     public static $delete;
-    public static $orderByDesc;
-    public static $orderByAsc;
+    public static $orderBy;
 
     function __construct($config){
         self::$mysqli = new mysqli($config['host'], $config['username'], $config['passwd'], $config['dbname']);
@@ -22,17 +21,27 @@ class queryBuilder{
     }
 
     public function select($columns){
-        if(gettype($columns) != "array"){
+        if(gettype($columns) == "array"){
+            self::$select = "SELECT ".implode(",", $columns);
+        }
+        elseif (gettype($columns) == "string"){
+            if($columns == "*"){
+                self::$select = "SELECT * ";
+            }
+            else{
+                return false;
+            }
+        }
+        else{
             return false;
         }
-        self::$select = "SELECT ".implode(",", $columns);
-
     }
+
     public function from($table){
         if(gettype($table) != "string"){
             return false;
         }
-        self::$from = "FROM ".$table;
+        self::$from = " FROM ".$table;
     }
     /**
      * $cases - ассоциативный массив
@@ -41,7 +50,7 @@ class queryBuilder{
         if(gettype($cases) != "array"){
             return false;
         }
-        self::$where = "WHERE ";
+        self::$where = " WHERE ";
         foreach ($cases as $key => $case) {
             if ($key < count($cases)-1){
                 self::$where .= $key.'='.$case.",";
@@ -51,8 +60,24 @@ class queryBuilder{
         }
     }
 
+    public function orderBy($order){
+        if(gettype($order) != "string"){
+            return false;
+        }
+        if($order == "DESC"){
+            self::$orderBy = "ORDER BY ".$order;
+        }
+        if($order == "ASC"){
+            self::$orderBy = "ORDER BY ".$order;
+        }
+    }
+
+    public function limit($first = 1, $second){
+        self::$limit = "LIMIT ".$first.", ".$second;
+    }
+
     public function execute(){
-        $query = self::$select.self::$from.self::$where;
+        $query = self::$select.self::$from.self::$where.self::$orderBy.self::$limit;
         return self::$mysqli->query($query);
     }
 
@@ -104,6 +129,14 @@ class queryBuilder{
 
     }
 
-
-
+    public function delete($table, $id){
+        if(gettype($table) == "string" && gettype($id) == "integer"){
+            $delete = "DELETE FROM ".$table;
+            $delete .= " WHERE `id` = ".$id;
+            return self::$mysqli->query($delete);
+        }
+        else{
+            return false;
+        }
+    }
 }
