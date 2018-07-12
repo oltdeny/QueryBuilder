@@ -9,6 +9,8 @@ $cases = [
 ];
 $newDb->select($columns);
 $newDb->from("Users");
-$newDb->where($cases);
-$success = mysqli_fetch_array($newDb->execute());
-print_r($success);
+$newDb->limit(1, 3);
+$success = $newDb->execute();
+while($row = $success->fetch_array()){
+    print_r($row);
+}

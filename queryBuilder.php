@@ -73,7 +73,7 @@ class queryBuilder{
     }
 
     public function limit($first = 1, $second){
-        self::$limit = "LIMIT ".$first.", ".$second;
+        self::$limit = " LIMIT ".$first.", ".$second;
     }
 
     public function execute(){
