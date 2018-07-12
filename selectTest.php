@@ -12,5 +12,7 @@ $newDb->from("Users");
 $newDb->limit(1, 3);
 $success = $newDb->execute();
 while($row = $success->fetch_array()){
+    echo "<pre>";
     print_r($row);
+    echo "</pre>";
 }

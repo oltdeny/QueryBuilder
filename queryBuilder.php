@@ -84,23 +84,9 @@ class queryBuilder{
     public function insert($table, $columns){
         if(gettype($table) == "string" && gettype($columns) == "array"){
             $insert = "INSERT INTO ".$table;
-            $keys = "(";
-            foreach ($columns as $key => $column) {
-                if ($key < count($columns)-1){
-                    $keys .= $key. ',';
-                    continue;
-                }
-                $keys .= $key.")";
-            }
-            $insert .= $keys."VALUES";
-            $values = "(";
-            foreach ($columns as $key => $column) {
-                if ($key < count($columns)-1){
-                    $values .= $column . ',';
-                    continue;
-                }
-                $values .= $column.")";
-            }
+            $keys = " (".implode(",", array_keys($columns)).") ";
+            $insert .= $keys."VALUES ";
+            $values = " (".implode(",", $columns).")";
             $insert .= $values;
             return self::$mysqli->query($insert);
         }
