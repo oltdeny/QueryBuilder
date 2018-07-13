@@ -99,8 +99,10 @@ class queryBuilder{
         if(gettype($table) == "string" && gettype($columns) == "array" && gettype($id) == "integer"){
             $update = "UPDATE ".$table." SET ";
             $values = "";
+            $i = 0;
             foreach ($columns as $key => $column) {
-                if ($key < count($columns)-1){
+                if ($i < count($columns)-1){
+                    $i++;
                     $values .= $key . '=' . $column . ",";
                     continue;
                 }
