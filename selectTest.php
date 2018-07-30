@@ -4,14 +4,14 @@ include_once "queryBuilder.php";
 
 $newDb = new queryBuilder($config);
 $columns = ["*"];
-$cases = [
-    "id"=>30
+$where = [
+    "id" => 30,
+    "nickname" => 'admin2'
 ];
-$newDb->select($columns);
-$newDb->from("Users");
-$newDb->limit(1, 3);
+$success = $newDb->select($columns)->from("Users")->where($where, "and");
 $success = $newDb->execute();
-while($row = $success->fetch_array()){
+
+while ($row = $success->fetch_array()) {
     echo "<pre>";
     print_r($row);
     echo "</pre>";

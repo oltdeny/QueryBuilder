@@ -1,130 +1,193 @@
 <?php
 
-class queryBuilder{
+class queryBuilder
+{
     public static $mysqli;
     public static $select;
     public static $from;
     public static $where;
     public static $insert;
+    public static $into;
+    public static $values;
     public static $limit;
+    public static $between;
+    public static $in;
     public static $update;
     public static $delete;
     public static $orderBy;
 
-    function __construct($config){
+    function __construct($config)
+    {
         self::$mysqli = new mysqli($config['host'], $config['username'], $config['passwd'], $config['dbname']);
         self::$mysqli->query("SET NAMES 'utf8'");
     }
 
-    public function dbClose(){
+    public function dbClose()
+    {
         self::$mysqli->close();
     }
 
-    public function select($columns){
-        if(gettype($columns) == "array"){
-            self::$select = "SELECT ".implode(",", $columns);
-        }
-        elseif (gettype($columns) == "string"){
-            if($columns == "*"){
-                self::$select = "SELECT * ";
+    public function select($columns)
+    {
+        if (is_array($columns)) {
+            foreach ($columns as $column) {
+                if (!is_string($column)) {
+                    return false;
+                }
             }
-            else{
+            self::$select = "SELECT " . implode(",", $columns);
+        } elseif (is_string($columns)) {
+            if ($columns == "*") {
+                self::$select = "SELECT * ";
+            } else {
                 return false;
             }
-        }
-        else{
+        } else {
             return false;
         }
+        return $this;
     }
 
-    public function from($table){
-        if(gettype($table) != "string"){
+    public function from($table)
+    {
+        if (!is_string($table)) {
             return false;
         }
-        self::$from = " FROM ".$table;
+        self::$from = " FROM " . $table;
+        return $this;
     }
-    /**
-     * $cases - ассоциативный массив
-     */
-    public function where($cases){
-        if(gettype($cases) != "array"){
+
+    public function where($conditions, $case = '')
+    {
+        if (!((is_array($conditions) || is_string($conditions)) && is_string($case))) {
             return false;
         }
-        self::$where = " WHERE ";
-        foreach ($cases as $key => $case) {
-            if ($key < count($cases)-1){
-                self::$where .= $key.'='.$case.",";
-                continue;
+        if ($case == "AND" || $case == "OR" || $case == "") {
+            self::$where = " WHERE ";
+            if (is_array($conditions)) {
+                foreach ($conditions as $key => $condition) {
+                    if (!is_string($condition)) {
+                        return false;
+                    }
+                    if ($key < count($conditions) - 1) {
+                        self::$where .= $key . '=' . $condition . " " . $case . " ";
+                        continue;
+                    }
+                    self::$where .= $key . '=' . $condition;
+                }
+            } elseif (is_string($conditions)) {
+                self::$where .= $conditions;
             }
-            self::$where .= $key.'='.$case;
-        }
+
+        } else return false;
+        return $this;
     }
 
-    public function orderBy($order){
-        if(gettype($order) != "string"){
+    public function between($val1, $val2)
+    {
+        self::$where .= "BETWEEN '$val1' AND '$val2'";
+        return $this;
+    }
+
+    public function in($values)
+    {
+        if (is_array($values)) {
+            foreach ($values as $value) {
+                if (!is_string($value)) {
+                    return false;
+                }
+            }
+            self::$where = "IN (" . implode(",", $values) . ")";
+        } elseif (is_string($values)) {
+            self::$where = "IN ('$values')";
+        }
+        return $this;
+    }
+
+    public function orderBy($order)
+    {
+        if (!is_string($order)) {
             return false;
         }
-        if($order == "DESC"){
-            self::$orderBy = "ORDER BY ".$order;
+        if ($order == "DESC") {
+            self::$orderBy = "ORDER BY " . $order;
         }
-        if($order == "ASC"){
-            self::$orderBy = "ORDER BY ".$order;
+        if ($order == "ASC") {
+            self::$orderBy = "ORDER BY " . $order;
         }
+
     }
 
-    public function limit($first = 1, $second){
-        self::$limit = " LIMIT ".$first.", ".$second;
+    public function limit($first = 1, $second)
+    {
+        self::$limit = " LIMIT " . $first . ", " . $second;
     }
 
-    public function execute(){
-        $query = self::$select.self::$from.self::$where.self::$orderBy.self::$limit;
-        return self::$mysqli->query($query);
-    }
-
-    public function insert($table, $columns){
-        if(gettype($table) == "string" && gettype($columns) == "array"){
-            $insert = "INSERT INTO ".$table;
-            $keys = " (".implode(",", array_keys($columns)).") ";
-            $insert .= $keys."VALUES ";
-            $values = " (".implode(",", $columns).")";
-            $insert .= $values;
-            return self::$mysqli->query($insert);
-        }
-        else{
+    public function insert($table, $columns)
+    {
+        if (is_string($table) && is_array($columns)) {
+            self::$insert = "INSERT INTO " . $table;
+            $keys = " (" . implode(",", array_keys($columns)) . ") ";
+            self::$insert .= $keys . "VALUES ";
+            $values = " (" . implode(",", $columns) . ")";
+            self::$insert .= $values;
+            return self::$insert;
+        } else {
             return false;
         }
     }
 
-    public function update($table, $columns, $id){
-        if(gettype($table) == "string" && gettype($columns) == "array" && gettype($id) == "integer"){
-            $update = "UPDATE ".$table." SET ";
+    public function update($table, $columns, $id)
+    {
+        if (is_string($table) && is_array($columns) && is_int($id)) {
+            self::$update = "UPDATE " . $table . " SET ";
             $values = "";
             $i = 0;
             foreach ($columns as $key => $column) {
-                if ($i < count($columns)-1){
+                if ($i < count($columns) - 1) {
                     $i++;
                     $values .= $key . '=' . $column . ",";
                     continue;
                 }
                 $values .= $key . '=' . $column;
             }
-            $update .= $values." WHERE ".$table.".`id` = ".$id;
-            return self::$mysqli->query($update);
-        }
-        else{
+            self::$update .= $values . " WHERE " . $table . ".`id` = " . $id;
+            return self::$update;
+        } else {
             return false;
         }
 
     }
 
-    public function delete($table, $id){
-        if(gettype($table) == "string" && gettype($id) == "integer"){
-            $delete = "DELETE FROM ".$table;
-            $delete .= " WHERE `id` = ".$id;
+    public function delete($table, $id)
+    {
+        if (gettype($table) == "string" && gettype($id) == "integer") {
+            $delete = "DELETE FROM " . $table;
+            $delete .= " WHERE `id` = " . $id;
             return self::$mysqli->query($delete);
-        }
-        else{
+        } else {
             return false;
         }
+    }
+
+    public function createSQL()
+    {
+        $query = "";
+        if (isset(self::$select)) {
+            $query = self::$select . self::$from . self::$where . self::$orderBy . self::$limit;
+        } elseif (isset(self::$insert)) {
+            $query = self::$insert;
+        } elseif (isset(self::$update)) {
+            $query = self::$update;
+        } elseif (isset(self::$delete) {
+            $query = self::$delete;
+        }
+        return $query;
+    }
+
+    public function execute()
+    {
+        $query = $this->createSQL();
+        return self::$mysqli->query($query);
     }
 }
