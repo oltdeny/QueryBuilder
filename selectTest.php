@@ -5,10 +5,13 @@ include_once "queryBuilder.php";
 $newDb = new queryBuilder($config);
 $columns = ["*"];
 $where = [
-    "id" => 30,
-    "nickname" => 'admin2'
+    "nickname" => ['=', "'sddsfdsf'"],
+    "password" => ['=', 123]
 ];
-$success = $newDb->select($columns)->from("Users")->where($where, "and");
+
+$cases = ["and"];
+
+$success = $newDb->select($columns)->from("Users")->where($where, $cases);
 $success = $newDb->execute();
 
 while ($row = $success->fetch_array()) {

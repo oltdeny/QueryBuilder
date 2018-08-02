@@ -57,35 +57,26 @@ class queryBuilder
         return $this;
     }
 
-    public function where($conditions, $case = '')
+    public function where($conditions, $cases)
     {
-        if (!((is_array($conditions) || is_string($conditions)) && is_string($case))) {
-            return false;
+        if (!(is_array($conditions) && (is_array($cases) || is_string($cases)))) {
+            return "Wrong type of data. Required array.";
         }
-        if ($case == "AND" || $case == "OR" || $case == "") {
-            self::$where = " WHERE ";
-            if (is_array($conditions)) {
-                foreach ($conditions as $key => $condition) {
-                    if (!is_string($condition)) {
-                        return false;
-                    }
-                    if ($key < count($conditions) - 1) {
-                        self::$where .= $key . '=' . $condition . " " . $case . " ";
-                        continue;
-                    }
-                    self::$where .= $key . '=' . $condition;
-                }
-            } elseif (is_string($conditions)) {
-                self::$where .= $conditions;
-            }
-
-        } else return false;
+        self::$where = " WHERE ";
+        $i = 0;
+        foreach ($conditions as $key => $condition){
+            self::$where .= $key.$condition[0].$condition[1]." ".$cases[$i]." ";
+            $i++;
+        }
         return $this;
     }
 
     public function between($val1, $val2)
     {
-        self::$where .= "BETWEEN '$val1' AND '$val2'";
+        if (!(is_int($val1) && is_int($val2))) {
+            return "Wrong type of data. Required integer.";
+        }
+        self::$where .= " BETWEEN $val1 AND $val2";
         return $this;
     }
 
@@ -156,7 +147,6 @@ class queryBuilder
         } else {
             return false;
         }
-
     }
 
     public function delete($table, $id)
@@ -179,7 +169,7 @@ class queryBuilder
             $query = self::$insert;
         } elseif (isset(self::$update)) {
             $query = self::$update;
-        } elseif (isset(self::$delete) {
+        } elseif (isset(self::$delete)) {
             $query = self::$delete;
         }
         return $query;
