@@ -32,7 +32,7 @@ class queryBuilder
         if (is_array($columns)) {
             foreach ($columns as $column) {
                 if (!is_string($column)) {
-                    return false;
+                    return "Wrong type of data. Required string.";
                 }
             }
             self::$select = "SELECT " . implode(",", $columns);
@@ -40,10 +40,10 @@ class queryBuilder
             if ($columns == "*") {
                 self::$select = "SELECT * ";
             } else {
-                return false;
+                return "Not allowed data for string.";
             }
         } else {
-            return false;
+            return "Wrong type of data.";
         }
         return $this;
     }
@@ -51,7 +51,7 @@ class queryBuilder
     public function from($table)
     {
         if (!is_string($table)) {
-            return false;
+            return "Wrong type of data. Required string.";
         }
         self::$from = " FROM " . $table;
         return $this;
@@ -85,7 +85,7 @@ class queryBuilder
         if (is_array($values)) {
             foreach ($values as $value) {
                 if (!is_string($value)) {
-                    return false;
+                    return "Wrong type of data. Required string.";
                 }
             }
             self::$where = "IN (" . implode(",", $values) . ")";
@@ -98,7 +98,7 @@ class queryBuilder
     public function orderBy($order)
     {
         if (!is_string($order)) {
-            return false;
+            return "Wrong type of data. Required string.";
         }
         if ($order == "DESC") {
             self::$orderBy = "ORDER BY " . $order;
@@ -106,12 +106,16 @@ class queryBuilder
         if ($order == "ASC") {
             self::$orderBy = "ORDER BY " . $order;
         }
-
+        return $this;
     }
 
     public function limit($first = 1, $second)
     {
+        if (!(is_int($first) && is_int($second))) {
+            return "Wrong type of data. Required integer.";
+        }
         self::$limit = " LIMIT " . $first . ", " . $second;
+        return $this;
     }
 
     public function insert($table, $columns)
@@ -124,7 +128,7 @@ class queryBuilder
             self::$insert .= $values;
             return self::$insert;
         } else {
-            return false;
+            return "Wrong type of data. Required parameters: string, array";
         }
     }
 
@@ -145,7 +149,7 @@ class queryBuilder
             self::$update .= $values . " WHERE " . $table . ".`id` = " . $id;
             return self::$update;
         } else {
-            return false;
+            return "Wrong type of data. Required parameters: string, array, integer";
         }
     }
 
@@ -156,7 +160,7 @@ class queryBuilder
             $delete .= " WHERE `id` = " . $id;
             return self::$mysqli->query($delete);
         } else {
-            return false;
+            return "Wrong type of data. Required parameters: string, integer";
         }
     }
 
